@@ -357,8 +357,10 @@ class _GroupwiseRankingModel(_RankingModel):
         for name, value in six.iteritems(context_features):
           # [batch_size, 1, ...].
           value = tf.expand_dims(value, axis=1)
-          # [batch_size, num_groups, ...].
-          value = tf.gather(value, tf.zeros([num_groups], tf.int32), axis=1)
+          # Constructs the multiples [1, num_groups, 1, ...].
+          multiples = tf.tensor_scatter_nd_update(tf.ones_like(tf.shape(value), tf.int32), [[1]], [num_groups])
+          # Use tf.tile to duplicate.
+          value = tf.tile(input=value, multiples=multiples)
           # [batch_size * num_groups, ...]
           large_batch_context_features[name] = utils.reshape_first_ndims(
               value, 2, [batch_size * num_groups])
